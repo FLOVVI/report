@@ -1,5 +1,36 @@
 import sqlite3
 import datetime as dt
+import yadisk
+import os
+
+yadisk_token = 'y0_AgAAAAAz3q8eAAr2mwAAAAD0Rs3otjfzkvntRf6Rsx5SlBJWe4N8880'
+
+
+class DatabaseCloud:
+
+    def __init__(self, token):
+        self.disk = yadisk.YaDisk(token=token)
+
+    def upload(self, user_file, disk_file, remove=True):
+        if disk_file in self.listdir() and remove:
+            self.remove(disk_file)
+        self.disk.upload(user_file, f'database/{disk_file}')
+
+    def download(self, user_file, disk_file):
+        os.remove(user_file)
+        self.disk.download(f'database/{disk_file}', user_file)
+
+    def listdir(self):
+        return [i.name for i in list(self.disk.listdir("/database"))]
+
+    def remove(self, disk_file):
+        self.disk.remove(f'database/{disk_file}')
+
+
+cloud = DatabaseCloud(yadisk_token)
+
+cloud.download('reportbot.db', 'reportbot.db')
+print('База данных установлена.')
 
 
 class Create:
@@ -51,6 +82,8 @@ class Database:
 
         for key, value in kwargs.items():
             cursor.execute(f"UPDATE main SET {key} = ? WHERE n = ?", (value, 1))
+
+        cloud.upload('reportbot.db', 'reportbot.db')
         connect.commit()
         connect.close()
 
